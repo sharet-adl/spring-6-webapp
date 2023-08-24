@@ -1,0 +1,97 @@
+Spring MockMVC with Mockito
+---------------------------
+Allow testing using the servlet in a mock context, test controller interaction.
+Mockito can be used to mock the Backend services..
+
+Tests pyramid:
+Unit Tests        +++++++ : specific sections of code, 70-80%, very fast, no external dependencies, no DB, no Spring context
+Integration Tests  +++++  : can include Spring context / DB / message brokers, slower
+Functional Tests     +    : app is live, invoke functional endpoints
+
+
+Testing Spring MVC controllers - tricky
+- tricky to test properly, as Controllers have a high degree of integration with Spring MVC FW ( req path/ http meth, path vars, json parsing/bounding POJO, junits are NOT enough !
+- ==> Spring Mock MVC specifically for Spring MVC Controller
+    - mocking HTTP req/resp, dispatcher servlet, ..
+    - simulating execution of controller, as if running under Spring with Tomcat ..
+- true unit test - when ran without Spring context
+- as integr test  - when used with Spring context
+- using Mocking to mock the Service !
+
+
+@WebMvcTest - Test SPLICES !
+- using mocks for services -- we coded to interfaces
+
+
+Best practice for POST:
+- besides the 201 HTTP responcse(=CREATED), return a Header named Location, with URI to the created resource.
+PUT:
+- update object ( all fields ) ..
+PATCH
+- supposed to update only the fields provided in the request; not supposed to affect ( eg. reset/nulify the other fields from the Model )
+
+
+Mockito - mocking framework for testing
+- DI usage; for the class under test, the injected dependencies can be mocks
+- Mocks = Test Doubles : [ Dummy, Fake, Stub, Mock, Spy ]
+- terms:
+    'verify' - nr of times method was called
+    'argument matcher' -
+    'argument captor'  - eg verify req data is properly being parsed and passed to svc layer
+-  JUNIT TEST  <---->   MOCK MVC  <----->   CONTROLLER under test   <----->   MOCKITO
+- TRICKY: IntelliJ might not know to auto-bring the import "import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;"
+  when typing .. mockMvc.perform(get(xx)); add it manually ..
+- PUT harder to test than POST (nothing returned) - can still check the invocation. Also can use ArgumentCaptor
+- PATCH - useful to use adhoc JSON
+- very useful methods:
+    - given(..).willReturn(..)
+    - mockMvc.perform(..).andExpect(..)
+    - verify()
+- also, can use ArgumentCaptor with ASSERTJ ( assertThat, ..)
+    - verify(..).someMethod(argCaptorInstance.capture())
+    - assertThat()
+- IntelliJ DOES NOT recognize the assertJ's Assertions.assertThat propertly..
+
+
+
+DRY principle
+- closely related to Single Responsibility principle
+- controller paths could be repeated in multiple places ( tests, etc )
+    - could externalize to Spring properties - rare, as they would not change
+    - prefer to use Constants ..
+
+
+Jayway JsonPath
+- handful DSL for reading JSON docs, part of Spring tests
+- TRICKY: IntelliJ brings 'import static net.bytebuddy.matcher.ElementMatchers.is' instead of 'import static org.hamcrest.core.Is.is' ..
+    Hamcrest matchers ..
+
+Jackson databind - ObjectMapper
+- ObjectMapper objectMapper = new ObjectMapper();
+- jackson has what is called 'modules' - INVOKE objectMapper.findAndRegisterModules();
+    allow it to fon on the classpath and find used modules, eg. if code uses a DateTime ( otherwise it could fail )
+- there is an OBJECT MAPPER created by SpringBoot, available to be used INSIDE SPRING CONTEXT !!
+    @AutoWired  ObjectMapper objectMapper;
+
+
+
+
+
+QUESTIONS:
+Could you implement a delete operation by passing the Id to delete in the request body?
+
+No and yes.
+  If you mean the HTTP DELETE method, then providing a request body is undefined.
+  (Some folks will say it's forbidden, but strictly speaking, that is not the case: the HTTP standards simply say it's undefined.
+  Ergo, it's anyone's guess what will happen with a particular HTTP server when you try.).
+  Same story as GET: behavior when in receipt of a request body is undefined.
+  Soo, if the question is can you pass the ID to delete in the request body for an HTTP DELETE operation, then while you could it's 100% undefined as to what will happen.
+  Even if your implementation of the HTTP server accepts the request body, who's to say that an intermediate proxy server might not toss it into the bitbucket.
+
+Yes, however, if you use an HTTP method which recognizes a request body (e.g., a POST or PUT or PATCH).
+  Indeed, this is often recommended when the id might be sensitive (as in privacy).
+  After all, it is common place for firewalls and proxies and load balancers to log entire URIs.
+  And when they do that, the ID gets logged as well.
+  That could have privacy implications (e.g., the ID is PII).
+  In this setting it is common (indeed recommended) to not put the ID into the URI which then means using a request body for the delete which means not using the DELETE method.
+

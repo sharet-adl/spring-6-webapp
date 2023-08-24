@@ -1,0 +1,73 @@
+SOLID principles of OOP
+ S - single responsibility principle     | single responsibility, small, full-screen of code
+ O - open - closed principle             | open for extension, closed for modification. Extend behavior without modifying it, use private vars set/get ONLY when you need them. Abstract base.
+ L - Liskov substitution principle       | 'If it looks like a duck, quacks like a duck, but needs batteries, you probably have wrong abstractions.' Violations of "is a" test.
+ I - interface segregation principle     | 'You want me to plug this in. Where?' Many fine grained interfaces that are client specific ( => components to be plug-and-play )
+ D - dependency inversion principle      | 'Would you solder a lamp directly to electical wiring in your wall?' Abstractions and details should not depend on each other
+
+Pragmatic / tips:
+- every request path does not need its own controller class
+- favor constructor Injection (over Setter injection). 'private final' !
+- use final properties for injected components ( declare as 'private final' and initialize in C-tor )
+- whenever practical, code to an interface ( date formatters, small things )
+- TODO: '@Primary' - seems newer Spring6, when multiple services implement same Intf, it will still pick one , no more error ?!
+   SFW should perform by default DI by type, so => "NoUniqueBeanDefinitionException"
+-
+
+
+Spring Boot configures Spring to do Components scan, for any annotated components inside the same package only !
+Cand creem clasa de test si o anotam cu @SpringBootTest, Spring o sa creeze SpringContext automat ..
+
+DI:
+- dependecy is begin injected by other object/program
+- done via:
+   - (instantiation) C-tor        - prefered.
+   - (after) via Setters          - debatable
+   - by class properties ( private / public )
+     - using private properties - BAD !
+     - spring can use reflection to set private properties. Works but is slow / hard testing
+- the class being injected has no responsibility in instantiating the object being injected
+- some say you avoid declaring objects using 'new'
+   - not 100%
+   - be pragmatic in what is/isn't managed in the Spring Context, no abuse
+- concrete classes vs. interfaces
+   - prefer using interfaces:
+        - runtime can choose which impl to use
+        - makes code testable ( mocking easy )
+        - follows SOL(I)D
+- IoC - inversion of control
+  - dependencies are not pre-determined
+  - allow dependencies to be injected at runtime, allowing the Framework to compose the application
+  - eg. H2 in memory data source, or mySql data source
+- in general Controllers do not need to coded to an interface
+
+
+Spring PROFILES:
+- control which beans are wired into the Context and which are no
+- allows control over bahavior/properties of app
+- i18N - common abbreviation for Internalization
+- in multiple Services implementations, we can qualify them with same Bean name and set a different @Profile for each
+   When testing, we can set the @ActiveProfile to point to relevant one ..
+- special profile named DEFAULT, activated ONLY when no other profile is active ..
+
+Beans Lifecycle
+- hooks
+- aware - ResourceLoaderAware, MessageSourceAware, etc ..
+
+S.P.E.L. - Spring Properties Expression Language - "${x.y.z}" - ref to properties
+
+
+H.T.T.P.:
+- R.M.M. Richardson maturity model; level4 Hypermedia, with Spring providing HATEOS implementation
+-  Spring has:
+    3 web frameworks for creating RESTful services
+        spring web mvc (older), robust, compatible Jakarta EE, based ServletAPI, blocking API and non-reactive !
+        spring web flux - reactive, project Reactor, not using Servlet API, follows MVC
+        webflux.fn - subset, functional programming model de define endpoints (alternative to annotation based)
+    2 web clients for consuming RESTful services
+        spring rest-template web-client : maintanence before, mature
+        spring web-client : reactor netty, non-blocking
+- marshalling/unmarshalling : POJO -> JSON/XML, and back
+  By default Spring configures Jackson to facilitate the conversion.
+- S.P.A. - single page applicaitons
+    SPA frameworks : Vue, ReactJS, AngularJS, ..

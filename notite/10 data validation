@@ -1,0 +1,65 @@
+Data validation _ eg:  Spring bean validation framework
+
+Validare date = programare defensiva
+- 'trust but verify'
+- ex: limitare lungine string, format data
+- G.I.G.O = Garbage In => Garbage Out
+- date de calitate sa fie salvate in DB
+- cand: early and often
+- unde: in UI, in Controller, in DB
+
+Java Bean Validation Framework
+- Java API standard
+- avoid if/then/throw Exception
+- Gunnar Morling - contributor
+- istories:
+     Annotations doar pe campuri
+     Anotari pe clase
+- BeanValidation -> JakartaBeanValidation; javax.validation -> jakarta.validation
+- validarea se poate face in: controlere, servicii, alte componente (managuite de Spring)
+- trebuie inclusa explicit in dependente
+- LIST bean ( MVC va returna 400-bad-request )
+  +___________________________________________________________________________
+  | @Null         | @DecimalMin     | @Digits           | @NonEmpty
+  | @NotNull      | @DecimalMax     | @Past             | @NonBlank
+  | @AssertTrue   | @Negative       | @PastOrPresent    | @Email
+  | @AssertFalse  | @NegativeOrZero | @Future           |
+  | @Min          | @Positive       | @FutureOrPresent  |
+  | @Max          | @PositiveOrZero | @Pattern          |
+
+- LIST hibernate ( va returna o Exceptie )
+  +___________________________________________________________________________
+  | @ScriptAssert       | @Length           | @Range            | @CNPJ
+  | @CreditCartNumber   | @CodePointLength  | @SafeHtml         | @CFP
+  | @Currency           | @LuhnCheck        | @UniqueElements   |
+  | @DurationMax        | @Mod10Check       | @Url
+  | @DurationMin        | @Mod11Check       |
+  | @EAN                |
+  | @ISBN               |
+
+- SBoot o sa auto-configureze validarea atunci cand nu numai API dar si o implementatare pt validare e presenta in ClassPath,
+   altfel validarile nu sunt facute, desi se pot folosi annotations in cod
+  >SBoot 2.3 => trebuie inclusa dependenta 'spring-boot-starter-validation' explicit
+
+Eg:
+  - in DTO, se adauga @NotNull, @NotBlank, etc, pe unul din campuri
+  - in controler, intainte de @RequestBody xDTO, se mai adauga si @Validated
+
+Se poate defini si un Custom-Validation-Handler ..
+- by default, Spring nu ofera informatii despre eroare !!
+- se prefera customizarea !
+- folosirea unui Map intermediar e de preferat, deoarece e rendat usor si bine de Jackson lib
+
+- in xDTO adaugam validari, si aceleasi le adaugam si in xEntity class ( pt JPA validation )..
+- !! Hibernate : uneori hibernate o sa faca Flush&Batch, si unele teste s-ar putea sa treaca desi trebuia sa faileze.
+        Asta deoarece sesiunea s-a terminat prea repede ..
+        Pentru a forta, trebuie apelata functia de Flush pe xRepo ..
+        Hibernate face batch inainte de a persista continutul .. lazy write ..
+- in impl de PATCH din Controller, nu puteam adauga @Validated, deoarece proprietatile pe care le primit POT avea NULL.
+   Asa ca ne bazam pe validarea care am adaugat-o deja in xEntity
+- VARCHAR2 in Hibernate este implicit setat la 255 de caractere
+- @Column(length=50) - validare la nivel de DB / Hibernate
+  @Size(50)  - validare mai devreme, inainte de a ajunge la DB; validare de contraint jakarta.validation ..
+- BEST PRACTICE - adaugare de validation-constraints care reflecta DB-constraints
+  Eg: la unele campuri String, putem adauga  - @Size(max = 255), deoarece Hibernate deja a setat default VARCHAR2=255 :), si daca stringul e mai lung, o sa arunce exceptie ..
+  Bean-validation constraint e de preferat ..

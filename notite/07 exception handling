@@ -1,0 +1,92 @@
+Exception Handling w/MVC
+------------------------
+Cannot code only for "happy path" scenarios .. defencing coding ..
+Java does have a strong/exceptional handling of exceptions, so does Spring ..
+If sketo projects, Spring MVC default handling will kick in when exceptions ..
+
+Communicating back to the client through HTTP status codes:
+ 100 series - informational responses
+ 200        - success
+ 300        - redirect
+ 400        - client error
+ 500        - server error
+
+Eg:
+   200 ok, 201 created, 202 accepted, 204 no content
+   400 bad request
+     401 unauthrz
+     403 forbidden
+     404 not found
+     405 method not found
+  500
+    Excption unexpected, bubbled up and caught, avoid leaking internal info; do not return Stack trace ..
+
+STANDARD exception handled by the  << DefaultHandlerExceptionResolver >>
+    It sets the appropriate HTTP status code, but does NOT write content to response body
+    MVC has support for customizing the error responses ..
+
+STANDARD Spring Exceptions:
+    BindException                    - 400 bad request
+    ConversionNotSupportedException  - 500 internal server error
+    HttpMediaTypeNotAcceptableEx     - 406 not acceptable
+    HttpMediaTypeNotSupportedE       - 415 unsupported media type
+    HttpMessageNotReadableEx         - 400 bad request
+    HttpMessageNotWritableEx         - 500
+    HttpRequestMethodNotSupportedEx  - 405 Method not allowed
+    MethodArgumentNotValid           - 400 bad request
+    MissingServletRequestParameterEx - 400 bad request
+    MissingServletRequstPartEx       - 400 bad request
+    NoSuchRequestHandlingMethodEx    - 404 not found
+    TypeMismatchEx                   - 400 bad request
+
+ANNOTATIONS
+    @ExceptionHandler                      - on a designated method in any (custom) controller, to handle specific Exception types
+    @ResponseStatus                        - on top of custom exception classes, to set desired HTTP status  ( most of the times )
+    @ControllerAdvice                      - global exception handler, separate class annotated with it
+    IMPL AbstractHandlerExceptionResolver  - => full control over response (also body)
+    ResponseStatusException.class          - setting in constructor
+
+SPRING BOOT - ERROR CONTROLLER - ErrorController
+- provide WhiteLabel error page for html req / JSON resp
+- properties:
+    server.error.include-binding-errors : never
+    server.error.include-exception : false
+    server.error.include-message : never
+    server.error.include-stacktrace : never
+    server.error.path : error
+    server.error.whitelabel.enabled : true
+- extend 'BasicError' Controller class provided by SPW
+
+Extras:
+- service can return an Optional<> when no data is found and let the Controller handle it
+- controller can then through relevant ex : xxx.orElseThrough(NotFoundException::new)
+
+
+Exemplu:
+- OWN public class NotFoundException extends RuntimeException {..}
+    semnaturi default:
+    - ( String message )
+    - ( String message, Throwable cause )
+    - ( Throwable cause )
+    - ( String message, Throwable cause, boolean enableSuppression, boolean writableStackT. )
+- throw exception using Mockito:
+    given(someSvc.api(any(x)).willThrow(NotFoundException.class)
+- in one controller code:
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity handleNotFoundException() {
+       return ResponseEntity.notFound().build();
+    }
+
+
+OPTIONAL usage:
+- Optional.of(xx), Optional.empty(), Optional<type>, .orElseThrow(..)
+- given
+     TypeX methodA(..) { return methodB(..) }
+     Optional<TypeX> methodB( ..)
+  If a methodA returns a TypeX, but inside, it return a call to other methodB that is Optional<TypeX>,
+   - could update methodA signatur
+   - or return with THROW =>
+      TypeX methodA(..) { return methodB(..).orElseThrow(SomeEx::new); }
+
+
+

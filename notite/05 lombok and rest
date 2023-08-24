@@ -1,0 +1,15 @@
+Spring Boot Development Tools
+- web application - plugin 'Live Reload'
+- compile and restart Spring Boot upon changes:
+  LIVE RELOAD
+  - add maven dependency: GAV :: org.springframework.boot:spring-boot-devtools:xxx
+    They will monitor the class files and compile class files to check for a change => trigger a reboot ..
+    Do change, ReCompile >> app auto reboots
+
+  - IntelliJ Ultimate : Run/Debug configurations >> SpringBoot >> MyRestMvcApplication >>
+        >> Add Run Option >> SpringBoot
+            >> On 'update' action  >  Do nothing / [ Update classes and resources ] / ..
+            >> On  frame deactivation > [ Update classes and resources ]
+        Upon source code changes, it does not need to press Recompile; it will not restart immediately, but once the active window is changed forth/back (to avoid restart with every Save action)..
+
+

@@ -1,0 +1,50 @@
+MySQL installation/configuration
+- mysql special way of defining users suffixed with the IP, eg: username@192.168.1.1, etc
+- mysql 8.x, MySQL Workbench ..
+
+- 2 problems when transitioning from H2 to MYSQL: varchar needs to have a size, UUID tried to store in binary instead of string ..
+- SpringBool will automatically create a profile for any property files defined in /resources, with dash('-') in its name ..
+  eg: application-localmysql.properties
+- JPA cu H2 e mai putin restrictiv .. ex: in entitty mapping putem avea 'varchar' si H2 e in stare sa il creeze
+  mysql e mai restrictive, vrea size setat - eg varchar(36)
+- pt UID, in DB se facea store ca si BINARY, mysql o sa failuze .. tb adaugata maparea
+  @JdbcTypeCode(SqlTypes.CHAR)
+
+- Spring configureaza un connection-pool la DB, implicit, cel mai folosit flavor este Hikari
+  - heavy in general, takes resources ( 10 connections by default )
+  - cand exista mai multe MSs conectate la acelasi DB, nr total poate fi mare ..
+  >> spring.datasource.hikari.pool-name=MyRestDB-HikariPool
+  >> spring.datasource.hikaki.maximum-pool-size=5
+
+- pentru production-like,
+    spring.jpa.hibernate.ddl-auto=validate
+
+- Hibernate cauta un fisier cu nume predefinit 'import.sql' in /resources, si il executa daca il gaseste.
+  SpringBoot cauta: 'schema.sql' sau 'data.sql' in root classpath ..
+  https://docs.spring.io/spring-boot/docs/2.1.x/reference/html/howto-database-initialization.html
+  Prefer on-going migration tools .. like Flyway
+
+- performance tuning pentru production-like:
+    spring.datasource.hikari.data-source-properties.cachePrepStmts=true
+    spring.datasource.hikari.data-source-properties.prepStmtCacheSize=250
+    spring.datasource.hikari.data-source-properties.prepStmtCacheSqlLimit=2048
+    spring.datasource.hikari.data-source-properties.useServerPrepStmts=true
+    spring.datasource.hikari.data-source-properties.useLocalSessionState=true
+    spring.datasource.hikari.data-source-properties.rewriteBatchedStatements=true
+    spring.datasource.hikari.data-source-properties.cacheResultSetMetadata=true
+    spring.datasource.hikari.data-source-properties.cacheServerConfiguration=true
+    spring.datasource.hikari.data-source-properties.elideSetAutoCommits=true
+    spring.datasource.hikari.data-source-properties.maintainTimeStats=false
+
+- Una din capabilitatile Hibernate este ca poate face reflectie asupra entitatilor(DB) si poate produce un script sql pt crearea lor
+    spring.jpa.properties.jakarta.persistence.schema-generation.scripts.action=create
+    spring.jpa.properties.jakarta.persistence.schema-generation.scripts.create-source=metadata
+    spring.jpa.properties.jakarta.persistence.schema-generation.scripts.create-target=create.sql
+  Insa face append in acelasi fisier temporarar (create.sql), cand rulam din nou ..
+    spring.jpa.properties.jakarta.persistence.schema-generation.scripts.action=drop-and-create
+    spring.jpa.properties.jakarta.persistence.schema-generation.scripts.create-source=metadata
+    spring.jpa.properties.jakarta.persistence.schema-generation.scripts.drop-target=drop-and-create.sql
+    spring.jpa.properties.jakarta.persistence.schema-generation.scripts.create-target=drop-and-create.sql
+
+
+

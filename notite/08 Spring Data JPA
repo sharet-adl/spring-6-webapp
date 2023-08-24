@@ -1,0 +1,89 @@
+Spring DATA JPA - abstactizare construita peste J.P.A. ( Hibernate este una din implementarile standardului JPA = Java Persistence API )
+- layer-ul de 'xxRepository' - repositories
+- implicit - foloseste Hibernate, si il abstractizeaza inca o data
+- foloseste 'repository pattern'
+- D.T.O. = Data Transfer Objects
+   - simple POJOs, "data structure" and "no behavior"
+   - to transfer data between producers/consumer; eg Controller exposing data to clients
+   -
+   client         MVC_Controller               Service                    Repository
+       +--[ DTO ]--+          +--------[ DTO ]--+   +--[ Entity ]----------+
+
+- WHY not using entities as POJOs, as DB entities are already POJOs ?
+  - PROS: for simple apps we can. Spring Data REST project is exposing DB entities directly !
+  - CONS: can leak data to client tier. Cannot be optimized for JSON serialization/deserialization. Diff needs of 2 layers ..
+- type conversions ( pojo <-> entity )
+    - service methods should not do type conversions, but offloaded to dedicated converters (Components) ..
+    - SFW provides 'interface Converter' (with generics) .. whole Converter structure
+    - MapStruct is a code generator (alternative to previous, preferable)
+        - you provide the interface, it generates the implementation ( ~Lombok )
+        - good Spring integration, can generate Spring-Converters or Spring-Components
+        - use Mapstructs components for injection into services
+    - flow: convert Model to DTOs, have Entities and use Mapstruct to convert back/forth DTOs ..
+
+
+.Values.servicesname
+.Chart.Name
+=> support ... {{ fullname
+
+spring-base-plugin
+  added both
+  adopters will also get it ..
+
+ENTITIES = DOMAINS
+@Entity CLASS
+   @Id private UUID id;
+   @Version private Integer version; // locking mechanism; will start by 0, on each update it will incr by 1, validation for lost updates ..
+   The UUID is tricky to use/generate by hibernate, => use @GeneratedValue(generator = "UUID")  && (hibernate specific) @GenericGenerator(..)
+   Also, @Column( lenght=36, etc ..).. Infinite number of possibilities, when compared to internal index .. But 36 chars all the time => more space needed overall ..
+   JPA adds extra stuff on top of Hibernate ..
+
+TESTING REPOSITORIES
+   @DataJpaTest
+   class XXReporitoryTest() {
+       @Autowired
+       XXRepository xxRepository;
+   }
+
+   Spring boot test splice - data jpa
+   When testing - annotation is @DataJpaTest !, Hibernate will do reflection upon entities (marked with @Column) ..
+   It will bring MINIMAL configuration, cannot autowire Controllers, it would fail.. as they will not be included in the Spring Context
+
+MAPSTRUCT
+- 1 dependency
+- build plugin 'maven-compiler-plugin', with 3 paths inside 'annotationProcessorPaths' :
+    [ mapstruct-processor, lombok, lombok-mapstruct-binding ]
+- mapstruct has few compiler options (8)
+    - minimal argument: -Amapstruct.defaultComponentModel=spring
+    - create annotated classes for us: so can optionally mark the classes it generates with Spring @Component
+      annontation, so they get picked up by components scan and added to the Spring Context ..
+- just by defining the mappers interfaces for IBeerMapper/ICustomerMapper with annotation @Mapper,
+   they will from now picked to do the transformation => /target, they will be marked with @Component
+
+
+Data Validation
+- entire framework for Bean validation
+
+Java Optional<>:
+- provide a type-level solution for representing optional values instead of null references
+
+AtomicReference<xx>
+- being able to reference content inside Lambda functions, outside ..
+
+Integration test
+- bring whole Spring context, allow Spring to create controller instance with services, wire H2 DB
+- will also include our bootstrap data ( for our knwon set of data )
+- inainte, testam interactiunea Controllerului si a FW, folosing Mock MVC;
+  acum vrem sa testam interactiunea Controllerului si a interactiunii lui cu JPA data layer
+- o sa apelam controller-ul direct, ca si cum am fi Spring FW, doar ca nu avem de-a face cu Web Context-ul !
+- de obicei testele sunt rulate in ordine alfabetica; data modificam bootstrap  data - pt testele negative, o sa afecteze si celelalte teste
+  Before, under the data test-splice, Spring was doing a rollback ..
+  So now, we have to tell it to do so .. adaugam 2 anotatii:
+  @Rollback, @Transactional
+
+T.D.D. = Test Driven Development
+ - write (failing) integration tests first, then add/implement functionality∂∂
+
+
+
+

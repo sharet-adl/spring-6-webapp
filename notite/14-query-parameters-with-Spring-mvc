@@ -1,0 +1,34 @@
+QUERY PARAMETERS
+----------------
+
+https://sfg-beer-works.github.io/brewery-api/#tag/Beer-Service
+
+beer supporting scenarios:
+ - by name
+ - by style
+ - by name and style
+ - no params
+
+Order:
+- define test (IT) (TDD) - testListBeersByName() - with mockMvc, give it queryParam
+- controller - update listBeers to accept a new @RequestParam for beerName
+  - fix tests
+- prefer to implement checking logic inside service
+- service - update listBeers to accept parameter and do extra checks
+  - can use IntelliJ to refactor/change-signature, so it will fix all places. Do it in the interface ..
+- repository - define own findAllByXXX (findAllByBeerNameIsLikeIgnoreCase) ..
+  - define new test for repo
+  - deoarece folosim test-splice (@DataJpaTest), or sa fie 0 records
+  - no data from DB - so do import of BootstrapData AND the implementation (annotated class)..
+      @DataJpaTest
+      @Import({BootstrapData.class, BeerCsvService.class})
+      class BeerRepositoryTest
+
+Notes:
+- JPA support combining AND for multiple fields: findAllByXXX, findAllByYYY => findAllByXXXAndByYYY
+
+Q: When implementing a query method on a Spring Data Repository interface, do you need to provide the implementation?
+   No, you do not need to provide the implementation. You only need to follow the naming conventions to achieve the desired query behavior.
+
+
+
